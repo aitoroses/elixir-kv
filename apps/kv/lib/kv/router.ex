@@ -9,7 +9,7 @@ defmodule KV.Router do
 
         # Try to find an entry in the table or raise
         entry =
-            Enum.find(table, fn {enum, node} ->
+            Enum.find(table, fn {enum, _node} ->
                 first in enum
             end) || no_entry_error(bucket)
 
@@ -31,7 +31,9 @@ defmodule KV.Router do
     """
     def table do
         # Replace computer-name with your local machine name.
-        [{?a..?m, :"foo@MacBook-Pro-de-Aitor-2"},
-         {?n..?z, :"bar@MacBook-Pro-de-Aitor-2"}]
+        # [{?a..?m, :"foo@MacBook-Pro-de-Aitor-2"},
+        #  {?n..?z, :"bar@MacBook-Pro-de-Aitor-2"}]
+        {:ok, table} = Application.fetch_env(:kv, :routing_table)
+        table
     end
 end
