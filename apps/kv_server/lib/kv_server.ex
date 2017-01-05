@@ -25,10 +25,17 @@ defmodule KVServer do
     # 3. `active: false` - blocks on `:gen_tcp.recv/2` until data is available
     # 4. `reuseaddr: true` - allows us to reuse the address if the listener crashes
     #
-    {:ok, socket} = :gen_tcp.listen(port,
+    msg = :gen_tcp.listen(port,
                       [:binary, packet: :line, active: false, reuseaddr: true])
-    Logger.info "Accepting connections on port #{port}"
-    loop_acceptor(socket)
+    case msg do
+        {:ok, socket} ->
+            Logger.info "Accepting connections on port #{port}"
+            loop_acceptor(socket)
+
+        {:error, :eaddrinuse} = err ->
+            #Logger.info "Node skipped listening."
+            err
+    end
   end
 
     defp loop_acceptor(socket) do
@@ -40,7 +47,6 @@ defmodule KVServer do
     end
 
     defp serve(socket) do
-
         msg =
             with {:ok, data} <- read_line(socket),
                  {:ok, command} <- KVServer.Command.parse(data),
@@ -62,7 +68,7 @@ defmodule KVServer do
         :gen_tcp.send(socket, "UNKNOWN COMMAND\r\n")
     end
 
-    defp write_line(socket, {:error, :closed}) do
+    defp write_line(_socket, {:error, :closed}) do
         # The connection was closed, exit politely.
         exit(:shutdown)
     end
